@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de conocimientos - Proyecto Aris</title>
+
+    <style>
+        /* Configuración general de la página. */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #263238;
+        }
+
+        .contenedor {
+            max-width: 1450px;
+            margin-left: 235px;
+            margin-right: auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #263238;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        /* Barra lateral de navegación. */
+        .barra-lateral {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 235px;
+            height: 100vh;
+            padding: 30px 15px;
+            background-color: #263746;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .barra-lateral h2 {
+            padding: 0 12px;
+            margin-bottom: 25px;
+            font-size: 19px;
+            color: white;
+        }
+
+        .enlace-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 12px;
+            border-radius: 6px;
+            color: #dce3e9;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .enlace-menu:hover {
+            background-color: #354b5e;
+        }
+
+        .enlace-menu.activo {
+            background-color: #1976d2;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Identificación del usuario conectado. */
+        .usuario-conectado {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        /* Contenedor horizontal de los botones de manuales. */
+        .botones-manuales {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        /* Botones para seleccionar cada manual. */
+        .boton-manual {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 6px;
+            background-color: #263746;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .boton-manual:hover {
+            background-color: #354b5e;
+        }
+
+        /* Apariencia del botón seleccionado. */
+        .boton-manual.activo {
+            background-color: #1976d2;
+        }
+
+        /* Tarjeta donde se mostrará la información del manual. */
+        .tarjeta-contenido {
+            min-height: 500px;
+            padding: 25px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Mensaje inicial del área de contenido. */
+        .mensaje-inicial {
+            min-height: 430px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #607d8b;
+        }
+
+        .mensaje-inicial span {
+            margin-bottom: 15px;
+            font-size: 45px;
+        }
+
+        .mensaje-inicial p {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        /* Adaptación para pantallas pequeñas. */
+        @media (max-width: 850px) {
+            body {
+                padding: 15px;
+            }
+
+            .barra-lateral {
+                width: 190px;
+            }
+
+            .contenedor {
+                margin-left: 190px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .barra-lateral {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .contenedor {
+                margin-left: auto;
+            }
+
+            .botones-manuales {
+                flex-direction: column;
+            }
+
+            .boton-manual {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Menú lateral de navegación. -->
+    <nav class="barra-lateral">
+
+        <h2>Sistema de Gestión de Incidentes y Requerimientos</h2>
+
+        <!-- Mostramos el usuario que inició sesión. -->
+        <div class="usuario-conectado">
+            <span>Usuario:</span>
+            <strong>{{ usuario_actual }}</strong>
+        </div>
+
+        <a href="/dashboard" class="enlace-menu">
+            <span>▦</span>
+            Dashboard
+        </a>
+
+        <a href="/asignacion" class="enlace-menu">
+            <span>▤</span>
+            Asignación
+        </a>
+
+        <a href="/tecnicos" class="enlace-menu">
+            <span>♙</span>
+            Técnicos
+        </a>
+
+        <a href="/base-conocimientos" class="enlace-menu activo">
+            <span>▣</span>
+            Base de conocimientos
+        </a>
+
+        <!-- Botón para cerrar la sesión actual. -->
+        <a href="/cerrar-sesion" class="enlace-menu">
+            <span>↪</span>
+            Cerrar sesión
+        </a>
+
+    </nav>
+
+    <main class="contenedor">
+
+        <h1>Base de conocimientos</h1>
+
+        <!-- Botones horizontales para seleccionar los manuales. -->
+        <section class="botones-manuales">
+
+            <button class="boton-manual activo" type="button" data-manual="1">
+                Manual
+            </button>
+
+            <button class="boton-manual" type="button" data-manual="2">
+                Manual
+            </button>
+
+            <button class="boton-manual" type="button" data-manual="3">
+                Manual
+            </button>
+
+            <button class="boton-manual" type="button" data-manual="4">
+                Manual
+            </button>
+
+        </section>
+
+        <!-- Área donde aparecerá dinámicamente el contenido del manual. -->
+        <section class="tarjeta-contenido" id="contenido-manual">
+
+            <div class="mensaje-inicial">
+                <span>▤</span>
+                <p>Selecciona un manual para consultar su contenido.</p>
+            </div>
+
+        </section>
+
+    </main>
+<script>
+    // Identificamos los botones de selección de manuales.
+    const botonesManuales = document.querySelectorAll(".boton-manual");
+
+    // Identificamos el área donde se mostrará el contenido.
+    const contenidoManual = document.getElementById("contenido-manual");
+
+    // Recorremos los botones para detectar cuál selecciona el usuario.
+    botonesManuales.forEach(boton => {
+
+        boton.addEventListener("click", function() {
+
+            // Quitamos el estado activo de todos los botones.
+            botonesManuales.forEach(elemento => {
+                elemento.classList.remove("activo");
+            });
+
+            // Activamos visualmente el botón seleccionado.
+            this.classList.add("activo");
+
+            // Obtenemos el identificador del manual seleccionado.
+            const numeroManual = this.dataset.manual;
+
+            // Mostramos temporalmente el identificador seleccionado.
+            contenidoManual.innerHTML = `
+                <h2>Manual ${numeroManual}</h2>
+                <p>Contenido del manual seleccionado.</p>
+            `;
+
+        });
+
+    });
+    </script>
+    </body>
+    </html>

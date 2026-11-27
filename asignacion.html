@@ -1,0 +1,3315 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignación de tickets</title>
+
+    <style>
+        /* Configuración general de la página. */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #263238;
+        }
+
+        .contenedor {
+            max-width: 1450px;
+            margin-left: 235px;
+            margin-right: auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #263238;
+        }
+
+        /* Estilo general de los subtítulos. */
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        /* Mensaje de confirmación de una asignación exitosa. */
+        .mensaje-exito {
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            font-size: 15px;
+            font-weight: bold;
+        }
+                /* Mensaje de advertencia cuando una asignación no puede completarse. */
+        .mensaje-error {
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            background-color: #ffebee;
+            color: #c62828;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        /* Contenedor del mensaje flotante de transferencia. */
+        .mensaje-transferencia {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 360px;
+            max-width: calc(100% - 40px);
+            padding: 18px;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+            font-size: 14px;
+        }
+
+        /* Encabezado y botón para cerrar la notificación. */
+        .encabezado-transferencia {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .encabezado-transferencia h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .cerrar-transferencia {
+            border: none;
+            background: transparent;
+            color: inherit;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        /* Separación de los datos del resumen. */
+        .mensaje-transferencia p {
+            margin: 6px 0;
+        }
+
+        /* Aviso cuando no se pudo completar la limpieza temporal. */
+        .aviso-limpieza {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #a5d6a7;
+            color: #8a5700;
+        }
+
+        /* Distribución de las dos secciones principales. */
+        .seccion-principal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        /* Diseño general de las tarjetas. */
+        .tarjeta {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Buscador de casos. */
+        .buscador {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .buscador input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        /* Estilo general de los botones. */
+        button {
+            padding: 11px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:disabled {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
+        }
+
+        .boton-buscar {
+            background-color: #1976d2;
+            color: white;
+        }
+
+        /* Botón para limpiar la búsqueda actual. */
+        .boton-limpiar {
+            background-color: #7f8c8d;
+            color: white;
+        }
+
+        .boton-accion {
+            background-color: #218838;
+            color: white;
+            font-size: 15px;
+            padding: 13px 20px;
+        }
+
+        .boton-seleccionar {
+            background-color: #e8f0fe;
+            color: #1967d2;
+        }
+
+        /* Información del caso seleccionado. */
+        .informacion-caso {
+            margin-top: 20px;
+            padding: 18px;
+            border: 1px solid #ddd;
+            border-radius: 7px;
+            background-color: #fafafa;
+        }
+
+        .informacion-caso p {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .etiqueta {
+            font-weight: bold;
+            color: #455a64;
+        }
+
+        /* Distribución de los botones de asignación. */
+        .acciones-caso {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Botón para abrir la asignación manual. */
+        .boton-manual {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 13px 20px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* Panel del técnico recomendado. */
+        .tecnico-recomendado {
+            padding: 18px;
+            margin-top: 20px;
+            background-color: #f5f8fc;
+            border: 1px solid #dce5f0;
+            border-radius: 7px;
+        }
+
+        .tecnico-recomendado h3 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+
+        /* Lista de técnicos recomendados. */
+        .ranking {
+            margin-top: 25px;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 13px;
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: white;
+        }
+
+        .ranking-item:first-child {
+            border-left: 4px solid #218838;
+        }
+
+        .ranking-numero {
+            font-weight: bold;
+            color: #1976d2;
+            margin-right: 10px;
+        }
+
+        /* Sección inferior de casos pendientes. */
+        .seccion-pendientes {
+            margin-top: 30px;
+        }
+
+        .encabezado-pendientes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Botón para activar el modo de administración de casos. */
+        .boton-modificar-casos {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .boton-modificar-casos:hover {
+            background-color: #2c3e50;
+        }
+
+        /* Distribución de los botones de acción de cada caso. */
+        .acciones-modificacion {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        /* Botón para editar un caso. */
+        .boton-editar-caso {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Botón para eliminar un caso. */
+        .boton-eliminar-caso {
+            background-color: #c0392b;
+            color: white;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #edf1f5;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .estado-vacio {
+            padding: 25px;
+            text-align: center;
+            color: #777;
+        }
+
+        /* Adaptamos las columnas para pantallas pequeñas. */
+        @media (max-width: 850px) {
+            body {
+                padding: 15px;
+            }
+
+            .seccion-principal {
+                grid-template-columns: 1fr;
+            }
+
+            .buscador {
+                flex-direction: column;
+            }
+        }
+
+/* Barra lateral de navegación. */
+.barra-lateral {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 235px;
+    height: 100vh;
+    padding: 30px 15px;
+    background-color: #263746;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+
+/* Título de la barra lateral. */
+.barra-lateral h2 {
+    padding: 0 12px;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 19px;
+    color: white;
+}
+
+
+.enlace-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px;
+    border-radius: 6px;
+    color: #dce3e9;
+    text-decoration: none;
+    font-size: 15px;
+    transition: background-color 0.2s;
+}
+
+.enlace-menu:hover {
+    background-color: #354b5e;
+}
+
+.enlace-menu.activo {
+    background-color: #1976d2;
+    color: white;
+    font-weight: bold;
+}
+
+/* Desplazamos el contenido para dejar espacio a la barra. */
+.contenedor {
+    margin-left: 235px;
+    max-width: 1450px;
+}
+
+/* Adaptación para pantallas pequeñas. */
+@media (max-width: 850px) {
+    .barra-lateral {
+        width: 190px;
+    }
+
+    .contenedor {
+        margin-left: 190px;
+    }
+}
+
+@media (max-width: 600px) {
+    .barra-lateral {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .contenedor {
+        margin-left: auto;
+    }
+}
+    /* Fondo oscuro que cubre la página al abrir el modal. */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    /* Ampliamos la ventana para mostrar cómodamente las tablas. */
+    .modal-contenido {
+        background-color: white;
+        width: 95%;
+        max-width: 1500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Encabezado del modal. */
+    .modal-encabezado {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    /* Botón para cerrar la ventana. */
+    .modal-cerrar {
+        background: none;
+        border: none;
+        font-size: 25px;
+        cursor: pointer;
+        color: #555;
+    }
+
+    /* Información del caso seleccionado. */
+    .modal-caso {
+        background-color: #f2f5f7;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    /* Tabla de técnicos dentro del modal. */
+    .tabla-tecnicos {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .tabla-tecnicos th,
+    .tabla-tecnicos td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+    }
+
+    .tabla-tecnicos th {
+        background-color: #263746;
+        color: white;
+    }
+
+    /* Técnicos que no pueden seleccionarse. */
+    .tecnico-deshabilitado {
+        color: #999;
+        background-color: #f5f5f5;
+    }
+
+    /* Separamos los botones de los campos del formulario. */
+    .modal-acciones {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 25px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    /* Damos espacio al campo de selección del archivo. */
+    #archivoCSV {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: #f8f9fa;
+    }
+
+    .boton-cancelar {
+        background-color: #7f8c8d;
+        color: white;
+        border: none;
+        padding: 11px 18px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .boton-confirmar {
+        background-color: #27ae60;
+        color: white;
+        border: none;
+        padding: 11px 18px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+
+    /* Botón para confirmar la eliminación de un caso. */
+    .boton-confirmar-eliminacion {
+        background-color: #c0392b;
+        color: white;
+        border: none;
+        padding: 11px 18px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    /* Mensaje de advertencia de la eliminación. */
+    .advertencia-eliminacion {
+        padding: 14px;
+        margin-bottom: 20px;
+        border: 1px solid #ef9a9a;
+        border-radius: 6px;
+        background-color: #ffebee;
+        color: #c62828;
+        line-height: 1.5;
+    }
+
+
+    /* Listas desplegables del modal. */
+    .modal-select {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+        background-color: white;
+        color: #333;
+    }
+
+    /* Agrupa los botones de administración de casos. */
+    .controles-casos {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Botón para agregar casos manualmente. */
+    .boton-agregar-caso {
+        background-color: #218c74;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    /* Botón para abrir la carga de archivos CSV. */
+    .boton-carga-archivo {
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        padding: 11px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .boton-carga-archivo:hover {
+        background-color: #125ca1;
+    }
+
+    /* Efecto al pasar el cursor sobre el botón. */
+    .boton-agregar-caso:hover {
+        background-color: #176b58;
+    }
+
+    /* Contenedor del formulario desplegable. */
+    .formulario-caso {
+        background-color: #f8f9fa;
+        border: 1px solid #dcdde1;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Encabezado del formulario. */
+    .formulario-caso-encabezado {
+        margin-bottom: 15px;
+    }
+
+    /* Distribución de los campos. */
+    #formAgregarCaso {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+
+    /* Cada campo del formulario. */
+    .campo-caso {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Campos de entrada y selección. */
+    .campo-caso input,
+    .campo-caso select,
+    .campo-caso textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        box-sizing: border-box;
+        font: inherit;
+    }
+
+    /* La descripción ocupa todo el ancho. */
+    .campo-caso:nth-child(2) {
+        grid-column: 1 / -1;
+    }
+
+    /* Botones del formulario. */
+    .acciones-formulario-caso {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    /* Botón cancelar. */
+    .boton-cancelar-caso {
+        background-color: #7f8c8d;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    /* Botón guardar. */
+    .boton-guardar-caso {
+        background-color: #218c74;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    /* Adaptación a pantallas pequeñas. */
+    @media (max-width: 700px) {
+        #formAgregarCaso {
+            grid-template-columns: 1fr;
+        }
+
+        .campo-caso:nth-child(2),
+        .acciones-formulario-caso {
+            grid-column: 1;
+        }
+    }
+
+
+    /* Separamos visualmente los resultados de la carga. */
+    .resultados-carga {
+        margin-top: 25px;
+    }
+
+    /* Estilo del resumen de procesamiento. */
+    .resumen-carga {
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #f4f6f8;
+        border-radius: 8px;
+    }
+
+    /* Separamos las secciones de las tablas. */
+    .seccion-resultados {
+        margin-top: 25px;
+    }
+
+    /* Permitimos desplazamiento horizontal en tablas extensas. */
+    .tabla-contenedor {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 12px;
+    }
+
+    /* Conservamos un formato uniforme para las tablas. */
+    .tabla-contenedor table {
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+    }
+
+    /* Estilo de las celdas. */
+    .tabla-contenedor th,
+    .tabla-contenedor td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    /* Diferenciamos los encabezados. */
+    .tabla-contenedor th {
+        background-color: #f0f2f5;
+    }
+
+
+    /* Notificaciones de registros inválidos. */
+    .notificacion-invalidos {
+        margin: 0;
+        padding: 10px 14px;
+        border-radius: 6px;
+        background-color: #e8f5e9;
+        color: #256029;
+        border: 1px solid #a5d6a7;
+        white-space: pre-line;
+        font-size: 13px;
+    }
+
+    .notificacion-invalidos.error {
+        background-color: #ffebee;
+        color: #b71c1c;
+        border-color: #ef9a9a;
+    }
+
+    /* Organizamos los controles y la notificación en una misma línea. */
+    .controles-edicion {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .controles-edicion .notificacion-invalidos {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    /* Identificación del usuario conectado. */
+    .usuario-conectado {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #ffffff;
+        font-size: 14px;
+    }
+
+    </style>
+</head>
+
+<body>
+
+<!-- Menú lateral de navegación. -->
+<nav class="barra-lateral">
+
+    <h2>Sistema de Gestión de Incidentes y Requerimientos</h2>
+
+    <!-- Mostramos el usuario que inició sesión. -->
+    <div class="usuario-conectado">
+        <span>Usuario:</span>
+        <strong>{{ usuario_actual }}</strong>
+    </div>
+
+    <a href="/dashboard" class="enlace-menu">
+        <span>▦</span>
+        Dashboard
+    </a>
+
+    <a href="/asignacion" class="enlace-menu activo">
+        <span>▤</span>
+        Asignación
+    </a>
+
+    <a href="/tecnicos" class="enlace-menu">
+        <span>♙</span>
+        Técnicos
+    </a>
+
+    <a href="/base-conocimientos" class="enlace-menu">
+        <span>▣</span>
+        Base de conocimientos
+    </a>
+        <!-- Botón para cerrar la sesión actual. -->
+    <a href="/cerrar-sesion" class="enlace-menu">
+        <span>↪</span>
+        Cerrar sesión
+    </a>
+
+</nav>
+
+
+    <main class="contenedor">
+
+        <h1>Asignación tickets</h1>
+
+        <!-- Botón para abrir la ventana de carga de archivos. -->
+        <div class="contenedor-carga-archivo" style="margin-bottom: 25px;">
+
+            <button
+                type="button"
+                class="boton-carga-archivo"
+                onclick="abrirModalCargaArchivo()"
+            >
+                CARGA DE ARCHIVO
+            </button>
+
+        </div>
+
+        <!-- Mostramos la confirmación cuando una asignación se realiza correctamente. -->
+        {% if mensaje_exito %}
+            <div class="mensaje-exito">
+                {{ mensaje_exito }}
+            </div>
+        {% endif %}
+
+        <!-- Mostramos un mensaje cuando ocurre un problema durante la asignación. -->
+        {% if mensaje_error %}
+            <div class="mensaje-error">
+                {{ mensaje_error }}
+            </div>
+        {% endif %}
+
+        <!-- Mensaje flotante con el resultado de la transferencia. -->
+        {% if resultado_transferencia %}
+        <div id="mensajeTransferencia" class="mensaje-transferencia">
+
+            <div class="encabezado-transferencia">
+                <h3>Resultado de la transferencia</h3>
+
+                <button
+                    type="button"
+                    class="cerrar-transferencia"
+                    onclick="cerrarMensajeTransferencia()"
+                    aria-label="Cerrar mensaje"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <p>
+                <strong>Casos enviados a la BD principal:</strong>
+                {{ resultado_transferencia.insertados }}
+            </p>
+
+            <p>
+                <strong>Casos eliminados de la BD temporal:</strong>
+                {{ resultado_transferencia.eliminados }}
+            </p>
+
+            <p>
+                <strong>Casos duplicados:</strong>
+                {{ resultado_transferencia.duplicados }}
+            </p>
+
+            {% if not resultado_transferencia.limpieza_exitosa %}
+            <div class="aviso-limpieza">
+                <strong>Advertencia:</strong>
+                Los casos fueron procesados, pero ocurrió un problema durante
+                la limpieza de la base temporal.
+
+                {% if resultado_transferencia.error_limpieza %}
+                    <p>{{ resultado_transferencia.error_limpieza }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+        {% endif %}
+
+        <!-- Mensaje flotante cuando la transferencia no pudo realizarse. -->
+        {% if error_transferencia %}
+        <div id="mensajeTransferenciaError" class="mensaje-error mensaje-transferencia">
+
+            <div class="encabezado-transferencia">
+                <h3>Error en la transferencia</h3>
+
+                <button
+                    type="button"
+                    class="cerrar-transferencia"
+                    onclick="cerrarMensajeTransferencia()"
+                    aria-label="Cerrar mensaje"
+                >
+                    &times;
+                </button>
+            </div>
+
+            <p>{{ error_transferencia }}</p>
+
+        </div>
+        {% endif %}
+
+        <!-- Secciones de búsqueda del caso y recomendación del técnico. -->
+        <section class="seccion-principal">
+
+            <!-- Columna izquierda: búsqueda e información del caso. -->
+            <div class="tarjeta">
+
+                <h2>Buscar caso</h2>
+
+
+            <form class="buscador" action="/asignacion" method="GET">
+
+                <!-- Campo para escribir el código del caso. -->
+                <input
+                    type="text"
+                    id="codigo-caso"
+                    name="codigo"
+                    placeholder="Ingrese el código del caso"
+                    value="{{ codigo_busqueda }}"
+                    required
+                >
+
+            <button class="boton-buscar" type="submit">
+                Buscar
+            </button>
+
+            <!-- Botón para limpiar la búsqueda actual. -->
+            <button
+                class="boton-limpiar"
+                type="button"
+                onclick="limpiarBusqueda()"
+            >
+                Limpiar búsqueda
+            </button>
+
+            </form>
+
+
+                <!-- Aquí se mostrará la información del caso encontrado. -->
+                <div class="informacion-caso">
+
+
+                    <h3>Información del caso</h3>
+
+                    {% if caso_seleccionado %}
+
+                        <!-- Mostramos los datos del caso encontrado. -->
+                        <p>
+                            <span class="etiqueta">Código:</span>
+                            {{ caso_seleccionado.codigo_caso }}
+                        </p>
+
+                        <p>
+                            <span class="etiqueta">Descripción:</span>
+                            {{ caso_seleccionado.descripcion }}
+                        </p>
+
+                        <p>
+                            <span class="etiqueta">Prioridad:</span>
+                            {{ caso_seleccionado.prioridad }}
+                        </p>
+
+                        <p>
+                            <span class="etiqueta">Sede:</span>
+                            {{ caso_seleccionado.nombre_sede }}
+                        </p>
+
+                        <p>
+                            <span class="etiqueta">Fecha de apertura:</span>
+                            {{ caso_seleccionado.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
+                        </p>
+
+                    {% elif mensaje_busqueda %}
+
+                        <!-- Mostramos el resultado de una búsqueda sin coincidencias. -->
+                        <p class="estado-vacio">
+                            {{ mensaje_busqueda }}
+                        </p>
+
+                    {% else %}
+
+                        <p class="estado-vacio">
+                            Busca o selecciona un caso para consultar su información.
+                        </p>
+
+                    {% endif %}
+
+
+                </div>
+                    <div class="acciones-caso">
+
+                        <!-- Formulario para solicitar la recomendación del algoritmo. -->
+                        <form action="{{ url_for('buscar_tecnico') }}" method="POST">
+
+                            <!-- Enviamos el código del caso seleccionado. -->
+                            <input
+                                type="hidden"
+                                name="codigo_caso"
+                                value="{{ caso_seleccionado.codigo_caso if caso_seleccionado else '' }}"
+                            >
+
+                            <button
+                                class="boton-accion"
+                                type="submit"
+                                {% if not caso_seleccionado %}disabled{% endif %}
+                            >
+                                Asignar técnico automáticamente
+                            </button>
+
+                        </form>
+
+                        <!-- Botón para abrir la ventana de asignación manual. -->
+                        <button
+                            class="boton-manual"
+                            type="button"
+                            onclick="abrirModalAsignacion()"
+                            {% if not caso_seleccionado %}disabled{% endif %}
+                        >
+                            Asignar técnico manualmente
+                        </button>
+                    </div>
+            </div>
+
+
+<!-- Columna derecha: recomendación y ranking de técnicos. -->
+<div class="tarjeta">
+
+    <h2>Recomendación de técnicos</h2>
+
+    <!-- Mostramos el técnico con la menor carga asignada. -->
+    <div class="tecnico-recomendado">
+
+        <h3>Técnico recomendado</h3>
+
+        {% if recomendaciones %}
+
+            <!-- El primer técnico del ranking es la recomendación principal. -->
+            <p>
+                <span class="etiqueta">Nombre:</span>
+                {{ recomendaciones[0].nombre }}
+            </p>
+
+            <p>
+                <span class="etiqueta">Tipo:</span>
+                {{ "VIP" if recomendaciones[0].es_vip else "Normal" }}
+            </p>
+
+            <p>
+                <span class="etiqueta">Sede:</span>
+                {{ recomendaciones[0].nombre_sede }}
+            </p>
+
+            <p>
+                <span class="etiqueta">Casos asignados:</span>
+                {{ recomendaciones[0].carga }} de 10
+            </p>
+
+        {% else %}
+
+            <p class="estado-vacio">
+                Selecciona un caso y busca el técnico óptimo.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+    <!-- Mostramos el ranking completo de técnicos disponibles. -->
+    <div class="ranking">
+
+        <h3>Ranking de técnicos</h3>
+
+        {% if recomendaciones %}
+
+            {% for tecnico in recomendaciones %}
+
+                <div class="ranking-item">
+
+                    <div>
+                        <span class="ranking-numero">
+                            #{{ tecnico.posicion }}
+                        </span>
+
+                        <strong>{{ tecnico.nombre }}</strong>
+
+                        <p>
+                            {{ "VIP" if tecnico.es_vip else "Normal" }}
+                            | {{ tecnico.nombre_sede }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <strong>{{ tecnico.carga }} / 10</strong>
+                        <p>Casos asignados</p>
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <p class="estado-vacio">
+                Todavía no hay recomendaciones para mostrar.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+    <!-- El botón permanecerá deshabilitado hasta implementar la confirmación. -->
+    <div class="acciones-caso">
+
+        <!-- Formulario para confirmar la asignación del técnico recomendado. -->
+        <form action="{{ url_for('asignar_recomendado') }}" method="POST">
+
+            <!-- Enviamos el código del caso seleccionado. -->
+            <input
+                type="hidden"
+                name="codigo_caso"
+                value="{{ caso_seleccionado.codigo_caso if caso_seleccionado else '' }}"
+            >
+
+            <!-- Enviamos el identificador del primer técnico del ranking. -->
+            <input
+                type="hidden"
+                name="id_tecnico"
+                value="{{ recomendaciones[0].id_tecnico if recomendaciones else '' }}"
+            >
+
+            <button
+                class="boton-accion"
+                type="submit"
+                {% if not caso_seleccionado or not recomendaciones %}disabled{% endif %}
+            >
+                Asignar técnico
+            </button>
+
+        </form>
+
+</div>
+
+</div>
+
+
+        </section>
+
+        <!-- Listado inferior de todos los casos pendientes de asignación. -->
+        <section class="tarjeta seccion-pendientes">
+
+        <div class="encabezado-pendientes">
+
+            <!-- Título de la sección de casos pendientes. -->
+            <h2>Casos pendientes de asignación</h2>
+
+            <!-- Controles para administrar los casos. -->
+            <div class="controles-casos">
+
+                <button
+                    type="button"
+                    id="botonAgregarCaso"
+                    class="boton-agregar-caso"
+                    style="display: none;"
+                    onclick="mostrarFormularioCaso()"
+                >
+                    AGREGAR CASO MANUALMENTE
+                </button>
+
+                <button
+                    type="button"
+                    id="botonModificarCasos"
+                    class="boton-modificar-casos"
+                    onclick="alternarModoModificacion()"
+                >
+                    MODIFICAR CASOS
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Formulario desplegable para registrar un caso manualmente. -->
+            <div id="formularioCaso" class="formulario-caso" style="display: none;">
+
+                <div class="formulario-caso-encabezado">
+                    <h3 id="tituloFormularioCaso">Agregar caso manualmente</h3>
+                </div>
+                    <form
+                        id="formAgregarCaso"
+                        action="{{ url_for('agregar_caso_manual') }}"
+                        method="POST"
+                    >
+
+                        <!-- Conservamos el código original para identificar el caso que se editará. -->
+                        <input
+                            type="hidden"
+                            id="codigoOriginal"
+                            name="codigo_original"
+                        >
+
+                    <!-- Código único del caso. -->
+                    <div class="campo-caso">
+                        <label for="codigoCaso">Código del caso:</label>
+                        <input
+                            type="text"
+                            id="codigoCaso"
+                            name="codigo_caso"
+                            maxlength="30"
+                            required
+                        >
+                    </div>
+
+                    <!-- Descripción del caso. -->
+                    <div class="campo-caso">
+                        <label for="descripcionCaso">Descripción:</label>
+                        <textarea
+                            id="descripcionCaso"
+                            name="descripcion"
+                            rows="3"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <!-- Prioridad del caso. -->
+                    <div class="campo-caso">
+                        <label for="prioridadCaso">Prioridad:</label>
+                        <select id="prioridadCaso" name="prioridad" required>
+                            <option value="">Selecciona una prioridad</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Media">Media</option>
+                            <option value="Baja">Baja</option>
+                        </select>
+                    </div>
+
+                    <!-- Sede a la que pertenece el caso. -->
+                    <div class="campo-caso">
+                        <label for="sedeCaso">Sede:</label>
+                        <select id="sedeCaso" name="nombre_sede" required>
+                            <option value="">Selecciona una sede</option>
+
+                            {% for sede in sedes %}
+                                <option value="{{ sede.nombre_sede }}">
+                                    {{ sede.nombre_sede }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Determinamos si el caso es VIP. -->
+                    <div class="campo-caso">
+                        <label for="vipCaso">¿Es VIP?</label>
+                        <select id="vipCaso" name="es_vip" required>
+                            <option value="0" selected>No</option>
+                            <option value="1">Sí</option>
+                        </select>
+                    </div>
+
+                    <!-- Fecha y hora de apertura del caso. -->
+                    <div class="campo-caso">
+                        <label for="fechaAperturaCaso">Fecha y hora de apertura:</label>
+                        <input
+                            type="datetime-local"
+                            id="fechaAperturaCaso"
+                            name="fecha_apertura"
+                            required
+                        >
+                    </div>
+
+                    <!-- Botones del formulario. -->
+                    <div class="acciones-formulario-caso">
+
+                        <button
+                            type="button"
+                            class="boton-cancelar-caso"
+                            onclick="ocultarFormularioCaso()"
+                        >
+                            Cancelar
+                        </button>
+
+                            <button
+                                type="submit"
+                                id="botonGuardarCaso"
+                                class="boton-guardar-caso"
+                            >
+                                Guardar caso
+                            </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="tabla-contenedor">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Prioridad</th>
+                            <th>Sede</th>
+                            <th>VIP</th>
+                            <th>Fecha de apertura</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        
+{% if error_consulta %}
+
+    <!-- Mostramos un mensaje si ocurrió un error en la consulta. -->
+    <tr>
+        <td colspan="6" class="estado-vacio">
+            {{ error_consulta }}
+        </td>
+    </tr>
+
+{% elif casos_pendientes %}
+
+    <!-- Recorremos los casos pendientes recuperados de la BD. -->
+    {% for caso in casos_pendientes %}
+    <tr>
+        <td>{{ caso.codigo_caso }}</td>
+        <td>{{ caso.descripcion }}</td>
+        <td>{{ caso.prioridad }}</td>
+        <td>{{ caso.nombre_sede }}</td>
+        <td>{{ "Sí" if caso.es_vip else "No" }}</td>
+
+        <!-- Mostramos la fecha de apertura con el formato deseado. -->
+        <td>
+            {% if caso.fecha_apertura %}
+                {{ caso.fecha_apertura.strftime('%d/%m/%Y %H:%M') }}
+            {% else %}
+                —
+            {% endif %}
+        </td>
+
+        <!-- Permitimos seleccionar el caso. -->
+        <td class="acciones-caso-tabla">
+
+            <!-- Botón para seleccionar el caso normalmente. -->
+            <div class="acciones-normales">
+                <form action="/asignacion" method="GET">
+
+                    <input
+                        type="hidden"
+                        name="codigo"
+                        value="{{ caso.codigo_caso }}"
+                    >
+
+                    <button class="boton-seleccionar" type="submit">
+                        Seleccionar
+                    </button>
+
+                </form>
+            </div>
+
+
+        <!-- Opciones que aparecerán en modo de modificación. -->
+        <div class="acciones-modificacion" style="display: none;">
+
+            <!-- Botón para editar el caso seleccionado. -->
+            <button
+                type="button"
+                class="boton-editar-caso"
+                onclick="editarCaso(this)"
+                data-codigo="{{ caso.codigo_caso }}"
+                data-descripcion="{{ caso.descripcion }}"
+                data-prioridad="{{ caso.prioridad }}"
+                data-sede="{{ caso.nombre_sede }}"
+                data-vip="{{ 1 if caso.es_vip else 0 }}"
+                data-fecha="{{ caso.fecha_apertura.strftime('%Y-%m-%dT%H:%M') if caso.fecha_apertura else '' }}"
+            >
+                Editar
+            </button>
+
+            <!-- Botón para abrir la confirmación de eliminación. -->
+            <button
+                type="button"
+                class="boton-eliminar-caso"
+                data-codigo="{{ caso.codigo_caso }}"
+                onclick="abrirModalEliminar(this)"
+            >
+                Eliminar
+            </button>
+
+        </div>
+
+
+        </td>
+    </tr>
+{% endfor %}
+
+{% else %}
+
+    <!-- Mensaje cuando no existen casos pendientes. -->
+    <tr>
+        <td colspan="7" class="estado-vacio">
+            No hay casos pendientes de asignación.
+        </td>
+    </tr>
+
+{% endif %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+    <!-- Ventana emergente para la asignación manual. -->
+    
+<!-- Ventana emergente para la asignación manual. -->
+
+<div id="modalAsignacion" class="modal">
+
+    <div class="modal-contenido">
+
+        <!-- Encabezado de la ventana. -->
+        <div class="modal-encabezado">
+            <h2>Asignación manual</h2>
+
+            <button
+                type="button"
+                class="modal-cerrar"
+                onclick="cerrarModalAsignacion()"
+            >
+                &times;
+            </button>
+        </div>
+
+        <!-- Formulario para enviar la asignación a Flask. -->
+        <form action="{{ url_for('asignar_manual') }}" method="POST">
+
+            <!-- Código del caso que se va a asignar. -->
+            <input
+                type="hidden"
+                name="codigo_caso"
+                value="{{ caso_seleccionado.codigo_caso if caso_seleccionado else '' }}"
+            >
+
+            <!-- Información del caso seleccionado. -->
+            <div class="modal-caso">
+                <strong>Caso seleccionado:</strong>
+
+                <span>
+                    {{ caso_seleccionado.codigo_caso if caso_seleccionado else "Sin seleccionar" }}
+                </span>
+            </div>
+
+            <!-- Selección de la sede. -->
+            <label for="selectSede">
+                <strong>Sede:</strong>
+            </label>
+
+            <select
+                id="selectSede"
+                name="id_sede"
+                class="modal-select"
+                onchange="actualizarTecnicos()"
+                required
+            >
+                <option value="">Selecciona una sede</option>
+
+                {% for sede in sedes %}
+                    <option
+                        value="{{ sede.id_sede }}"
+                        {% if caso_seleccionado and sede.nombre_sede == caso_seleccionado.nombre_sede %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ sede.nombre_sede }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <!-- Selección del técnico. -->
+            <label for="selectTecnico">
+                <strong>Técnico disponible:</strong>
+            </label>
+
+            <select
+                id="selectTecnico"
+                name="id_tecnico"
+                class="modal-select"
+                disabled
+                onchange="actualizarEstadoBoton()"
+                required
+            >
+                <option value="">Selecciona primero una sede</option>
+            </select>
+
+
+        <!-- Botones de la ventana de asignación manual. -->
+        <div class="modal-acciones">
+
+            <button
+                type="button"
+                class="boton-cancelar"
+                onclick="cerrarModalAsignacion()"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="submit"
+                id="botonConfirmarAsignacion"
+                class="boton-confirmar"
+                disabled
+            >
+                Confirmar asignación
+            </button>
+
+        </div>
+
+            </div>
+
+        </div>
+
+
+<!-- Ventana de confirmación para eliminar un caso. -->
+<div id="modalEliminarCaso" class="modal">
+
+    <div class="modal-contenido">
+
+        <!-- Encabezado de la ventana. -->
+        <div class="modal-encabezado">
+
+            <h2>Eliminar caso</h2>
+
+            <button
+                type="button"
+                class="modal-cerrar"
+                onclick="cerrarModalEliminar()"
+            >
+                &times;
+            </button>
+
+        </div>
+
+        <!-- Información del caso seleccionado. -->
+        <div class="modal-caso">
+
+            <strong>Caso seleccionado:</strong>
+
+            <span id="codigoCasoEliminar"></span>
+
+        </div>
+
+        <!-- Advertencia sobre la eliminación. -->
+        <div class="advertencia-eliminacion">
+
+            ¿Estás seguro de que deseas eliminar este caso?
+
+            <br><br>
+
+            Esta acción eliminará definitivamente el registro
+            de la base de datos y no se puede deshacer.
+
+        </div>
+
+        <!-- Formulario para confirmar la eliminación. -->
+        <form
+            action="{{ url_for('eliminar_caso_asignacion') }}"
+            method="POST"
+        >
+
+            <!-- Código del caso que se enviará a Flask. -->
+            <input
+                type="hidden"
+                id="inputCodigoEliminar"
+                name="codigo_caso"
+            >
+
+        <!-- Botones de confirmación de eliminación. -->
+        <div class="modal-acciones">
+
+            <button
+                type="button"
+                class="boton-cancelar"
+                onclick="cerrarModalEliminar()"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="submit"
+                class="boton-confirmar-eliminacion"
+            >
+                Eliminar caso
+            </button>
+
+        </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+    <!-- El modal se abre automáticamente cuando hay resultados de una carga. -->
+    <div id="modalCargaArchivo" class="modal"
+        {% if mostrar_resultados_carga %}style="display: flex;"{% endif %}>
+
+        <div class="modal-contenido">
+
+            <!-- Encabezado de la ventana. -->
+            <div class="modal-encabezado">
+
+                <h2>Carga de archivo</h2>
+
+                <button
+                    type="button"
+                    class="modal-cerrar"
+                    onclick="cerrarModalCargaArchivo()"
+                >
+                    &times;
+                </button>
+
+            </div>
+
+            <!-- Formulario para seleccionar el archivo CSV. -->
+            <form
+                action="/cargar-csv"
+                method="POST"
+                enctype="multipart/form-data"
+            >
+
+                <div class="campo-caso">
+
+                    <label for="archivoCSV">
+                        Selecciona el archivo CSV de ServiceDesk:
+                    </label>
+
+                    <input
+                        type="file"
+                        id="archivoCSV"
+                        name="archivo"
+                        accept=".csv"
+                        required
+                    >
+
+                </div>
+
+            <!-- Botones de la ventana de carga de archivos. -->
+            <div class="modal-acciones">
+
+                <!-- Antes de procesar el archivo, permitimos cerrar la ventana. -->
+                {% if not hay_carga_para_limpiar %}
+
+                    <button
+                        type="button"
+                        class="boton-cancelar"
+                        onclick="cerrarModalCargaArchivo()"
+                    >
+                        Cancelar
+                    </button>
+
+                {% else %}
+
+                    <!-- Después de una carga exitosa, permitimos limpiarla. -->
+                    <button
+                        type="submit"
+                        form="formLimpiarCargue"
+                        class="boton-cancelar"
+                    >
+                        Limpiar cargue
+                    </button>
+
+                {% endif %}
+
+                <!-- Permite procesar otro archivo CSV. -->
+                <button
+                    type="submit"
+                    class="boton-confirmar"
+                >
+                    Procesar archivo
+                </button>
+                <!-- Envía los casos válidos a la base principal para su asignación. -->
+                {% if mostrar_resultados_carga %}
+                    <button
+                        type="submit"
+                        form="formTransferirCasos"
+                        class="boton-confirmar"
+                    >
+                        Enviar casos válidos para asignar
+                    </button>
+                {% endif %}
+            </div>
+
+            </form>
+
+            <!-- Formulario independiente para limpiar únicamente la última carga. -->
+            <form
+                id="formLimpiarCargue"
+                action="/cancelar-importacion"
+                method="POST"
+            >
+            </form>
+            <!-- Formulario independiente para transferir los casos válidos. -->
+            <form
+                id="formTransferirCasos"
+                action="/transferir-casos"
+                method="POST"
+            >
+            </form>
+
+            <!-- Mostramos los resultados únicamente después de procesar un archivo. -->
+            {% if mostrar_resultados_carga %}
+
+                <div class="resultados-carga">
+
+                    <!-- Resumen del procesamiento del CSV. -->
+                    <div class="resumen-carga">
+                        <h3>{{ mensaje_carga }}</h3>
+                        <p>{{ detalle_carga }}</p>
+                    </div>
+        
+            <!-- Tabla de casos válidos almacenados temporalmente. -->
+                <div class="seccion-resultados">
+                        <h3>Registros válidos ({{ casos_temporales|length }})</h3>
+
+                        {% if casos_temporales %}
+
+                            <!-- Botón para activar o desactivar la edición de los registros. -->
+                            <div style="margin-bottom: 15px;">
+
+                                <!-- Activa la edición de los registros válidos. -->
+                                <button
+                                    type="button"
+                                    id="btnEditarCasosValidos"
+                                    onclick="alternarEdicionCasosValidos()"
+                                >
+                                    Editar registro
+                                </button>
+
+                                <!-- Formulario que recibirá todos los registros modificados. -->
+                                <form
+                                    id="formActualizarTodos"
+                                    action="/actualizar-casos"
+                                    method="POST"
+                                    style="display: inline;"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="registros"
+                                        id="registrosActualizados"
+                                    >
+
+                                    <button
+                                        type="button"
+                                        id="btnGuardarTodos"
+                                        onclick="guardarTodosLosCasos()"
+                                        hidden
+                                    >
+                                        Guardar todos los cambios
+                                    </button>
+                                </form>
+
+                                <!-- Cancela la edición de todos los registros. -->
+                                <button
+                                    type="button"
+                                    id="btnCancelarEdicionCasos"
+                                    onclick="alternarEdicionCasosValidos()"
+                                    hidden
+                                >
+                                    Cancelar edición
+                                </button>
+                            </div>
+                            <div class="tabla-contenedor">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Estado</th>
+                                            <th>Descripción</th>
+                                            <th>Prioridad</th>
+                                            <th>Fecha de apertura</th>
+                                            <th>Fecha inicio gestión</th>
+                                            <th>Fecha vencimiento</th>
+                                            <th>VIP</th>
+                                            <th>Sede</th>
+                                            <th>Observaciones</th>
+                                            <th>Fecha registro</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for caso in casos_temporales %}
+
+                                            {% set numero = loop.index %}
+                                            {% set fecha_apertura = caso["fecha_apertura"].strftime("%Y-%m-%dT%H:%M") if caso["fecha_apertura"] else "" %}
+
+                                            <tr>
+                                                <!-- Formulario asociado a los controles de esta fila. -->
+                                                <td>
+                                                    <form
+                                                        id="formEditarCaso{{ numero }}"
+                                                        action="/actualizar-caso"
+                                                        method="POST"
+                                                    >
+                                                        <input
+                                                            type="hidden"
+                                                            name="codigo_original"
+                                                            value="{{ caso['codigo_caso'] }}"
+                                                        >
+                                                    </form>
+
+                                                    <span class="dato-lectura">
+                                                        {{ caso["codigo_caso"] }}
+                                                    </span>
+
+                                                    <input
+                                                        class="campo-edicion"
+                                                        type="text"
+                                                        name="codigo_caso"
+                                                        value="{{ caso['codigo_caso'] }}"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                        required
+                                                    >
+                                                </td>
+
+                                                <!-- Estado del caso. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["estado"] }}
+                                                    </span>
+
+                                                    <select
+                                                        class="campo-edicion"
+                                                        name="estado"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                    >
+                                                        {% for estado in [
+                                                            "Activo",
+                                                            "Asignado",
+                                                            "Pendiente del cliente",
+                                                            "Vencido",
+                                                            "Garantia",
+                                                            "Solucionado",
+                                                            "Completado"
+                                                        ] %}
+                                                            <option
+                                                                value="{{ estado }}"
+                                                                {% if caso["estado"] == estado %}selected{% endif %}
+                                                            >
+                                                                {{ estado }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+
+                                                <!-- Descripción del caso. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["descripcion"] }}
+                                                    </span>
+
+                                                    <textarea
+                                                        class="campo-edicion"
+                                                        name="descripcion"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                        required
+                                                    >{{ caso["descripcion"] }}</textarea>
+                                                </td>
+
+                                                <!-- Prioridad del caso. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["prioridad"] }}
+                                                    </span>
+
+                                                    <input
+                                                        class="campo-edicion"
+                                                        type="text"
+                                                        name="prioridad"
+                                                        value="{{ caso['prioridad'] }}"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                        required
+                                                    >
+                                                </td>
+
+                                                <!-- Fecha de apertura. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["fecha_apertura"] }}
+                                                    </span>
+
+                                                    <input
+                                                        class="campo-edicion"
+                                                        type="datetime-local"
+                                                        name="fecha_apertura"
+                                                        value="{{ fecha_apertura }}"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                        required
+                                                    >
+                                                </td>
+
+                                                <!-- Fecha de inicio de gestión, calculada automáticamente. -->
+                                                <td>
+                                                    {{ caso["fecha_inicio_gestion"] }}
+                                                </td>
+
+                                                <!-- Fecha de vencimiento, calculada automáticamente. -->
+                                                <td>
+                                                    {{ caso["fecha_vencimiento"] }}
+                                                </td>
+
+                                                <!-- Indicador VIP. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ "Si" if caso["es_vip"] else "No" }}
+                                                    </span>
+
+                                                    <select
+                                                        class="campo-edicion"
+                                                        name="es_vip"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                    >
+                                                        <option value="No" {% if not caso["es_vip"] %}selected{% endif %}>
+                                                            No
+                                                        </option>
+                                                        <option value="Si" {% if caso["es_vip"] %}selected{% endif %}>
+                                                            Si
+                                                        </option>
+                                                    </select>
+                                                </td>
+
+                                                <!-- Sede del caso. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["nombre_sede"] }}
+                                                    </span>
+
+                                                    <select
+                                                        class="campo-edicion"
+                                                        name="nombre_sede"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                        required
+                                                    >
+                                                        <option value="">Seleccionar sede</option>
+
+                                                        {% for sede in sedes %}
+                                                            <option
+                                                                value="{{ sede['nombre_sede'] }}"
+                                                                {% if caso["nombre_sede"] == sede["nombre_sede"] %}selected{% endif %}
+                                                            >
+                                                                {{ sede["nombre_sede"] }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+
+                                                <!-- Observaciones del caso. -->
+                                                <td>
+                                                    <span class="dato-lectura">
+                                                        {{ caso["observaciones"] or "" }}
+                                                    </span>
+
+                                                    <textarea
+                                                        class="campo-edicion"
+                                                        name="observaciones"
+                                                        form="formEditarCaso{{ numero }}"
+                                                        hidden
+                                                    >{{ caso["observaciones"] or "" }}</textarea>
+                                                </td>
+
+                                                <!-- Fecha de registro, generada por el sistema. -->
+                                                <td>
+                                                    {{ caso["fecha_registro"] }}
+                                                </td>
+
+                                                <!-- Acciones disponibles durante la edición. -->
+                                                <td>
+                                                    <div class="acciones-edicion" hidden>
+                                                        <button
+                                                            type="submit"
+                                                            form="formEditarCaso{{ numero }}"
+                                                        >
+                                                            Guardar cambios
+                                                        </button>
+                                                        <!-- Formulario independiente para eliminar el caso seleccionado. -->
+                                                        <form
+                                                            id="formEliminarCaso{{ numero }}"
+                                                            action="/eliminar-caso"
+                                                            method="POST"
+                                                        >
+                                                            <input
+                                                                type="hidden"
+                                                                name="codigo_caso"
+                                                                value="{{ caso['codigo_caso'] }}"
+                                                            >
+                                                        </form>
+
+                                                        <button
+                                                            type="submit"
+                                                            form="formEliminarCaso{{ numero }}"
+                                                            onclick="return confirm('¿Estás seguro de que deseas eliminar este caso?');"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        {% else %}
+                            <p>No hay registros válidos para mostrar.</p>
+                        {% endif %}
+                </div>
+                    <!-- Tabla de registros que requieren corrección. -->
+
+<!-- Tabla de registros que requieren corrección. -->
+<div class="seccion-resultados" id="seccionInvalidos">
+
+    <h3>Registros inválidos ({{ registros_invalidos|length }})</h3>
+
+    {% if registros_invalidos %}
+
+        <!-- Controles generales de edición de registros inválidos. -->
+        <div class="controles-edicion">
+
+            <button
+                type="button"
+                id="btnEditarInvalidos"
+                onclick="alternarEdicionInvalidos()">
+                Editar registro
+            </button>
+
+            <button
+                type="button"
+                id="btnGuardarTodosInvalidos"
+                onclick="guardarTodosInvalidos()"
+                hidden>
+                Guardar todos los cambios
+            </button>
+
+            <button
+                type="button"
+                id="btnCancelarEdicionInvalidos"
+                onclick="alternarEdicionInvalidos()"
+                hidden>
+                Cancelar edición
+            </button>
+
+            <!-- Notificaciones de las operaciones sobre registros inválidos. -->
+            <div
+                id="notificacionInvalidos"
+                class="notificacion-invalidos"
+                role="status"
+                aria-live="polite"
+                hidden>
+            </div>
+
+        </div>
+
+        <div class="tabla-contenedor">
+
+            <table id="tablaInvalidos">
+
+                <thead>
+                    <tr>
+                        <th>ID registro</th>
+                        <th>N.º registro</th>
+                        <th>Código caso</th>
+                        <th>Estado</th>
+                        <th>Descripción</th>
+                        <th>Fecha prevista</th>
+                        <th>Prioridad</th>
+                        <th>Fecha apertura</th>
+                        <th>VIP</th>
+                        <th>Sede</th>
+                        <th>Errores</th>
+                        <th>Campos adicionales</th>
+                        <th>Fecha registro</th>
+                        <th class="columna-acciones">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for registro in registros_invalidos %}
+
+                        <tr
+                            data-id="{{ registro.id_registro }}"
+                            data-campos-adicionales="{{ registro.campos_adicionales|tojson|forceescape }}">
+
+                            <!-- Identificador interno: no editable. -->
+                            <td>{{ registro.id_registro }}</td>
+
+                            <!-- Número original del registro: no editable. -->
+                            <td>{{ registro.numero_registro }}</td>
+
+                            <!-- Código del caso. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.codigo_caso or '' }}
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="codigo_caso"
+                                    value="{{ registro.codigo_caso or '' }}"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+                            </td>
+
+                            <!-- Estado del caso. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.estado or '' }}
+                                </span>
+
+                                <select
+                                    name="estado"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+
+                                    {% for estado in [
+                                        'Activo',
+                                        'Asignado',
+                                        'Pendiente del cliente',
+                                        'Vencido',
+                                        'Garantia',
+                                        'Solucionado',
+                                        'Completado'
+                                    ] %}
+
+                                        <option
+                                            value="{{ estado }}"
+                                            {% if registro.estado == estado %}selected{% endif %}>
+                                            {{ estado }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+                            </td>
+
+                            <!-- Descripción del caso. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.descripcion or '' }}
+                                </span>
+
+                                <textarea
+                                    name="descripcion"
+                                    class="campo-edicion-invalido"
+                                    hidden>{{ registro.descripcion or '' }}</textarea>
+                            </td>
+
+                            <!-- Fecha prevista: puede estar vacía. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.fecha_prevista or '' }}
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="fecha_prevista"
+                                    value="{{ registro.fecha_prevista or '' }}"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+                            </td>
+
+                            <!-- Prioridad del caso. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.prioridad or '' }}
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="prioridad"
+                                    value="{{ registro.prioridad or '' }}"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+                            </td>
+
+                            <!-- Fecha de apertura: conserva el formato de ServiceDesk. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.fecha_apertura or '' }}
+                                </span>
+
+                                <input
+                                    type="text"
+                                    name="fecha_apertura"
+                                    value="{{ registro.fecha_apertura or '' }}"
+                                    class="campo-edicion-invalido"
+                                    placeholder="DD/MM/AA HH:MM:SS"
+                                    hidden>
+                            </td>
+
+                            <!-- VIP: vacío se interpreta como No. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ 'Sí' if registro.es_vip else 'No' }}
+                                </span>
+
+                                <select
+                                    name="es_vip"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+
+                                    <option
+                                        value="No"
+                                        {% if not registro.es_vip %}selected{% endif %}>
+                                        No
+                                    </option>
+
+                                    <option
+                                        value="Si"
+                                        {% if registro.es_vip %}selected{% endif %}>
+                                        Sí
+                                    </option>
+
+                                </select>
+                            </td>
+
+                            <!-- Sede: se selecciona de las sedes disponibles. -->
+                            <td>
+                                <span class="dato-lectura-invalido">
+                                    {{ registro.nombre_sede or '' }}
+                                </span>
+
+                                <select
+                                    name="nombre_sede"
+                                    class="campo-edicion-invalido"
+                                    hidden>
+
+                                    <option value="">Seleccione una sede</option>
+
+                                    {% for sede in sedes %}
+
+                                        <option
+                                            value="{{ sede.nombre_sede }}"
+                                            {% if registro.nombre_sede == sede.nombre_sede %}selected{% endif %}>
+                                            {{ sede.nombre_sede }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+                            </td>
+
+                            <!-- Errores: solamente lectura. -->
+                            <td>
+                                {{ registro.errores|join('; ') }}
+                            </td>
+
+                            <!-- Campos adicionales: solamente lectura en esta primera etapa. -->
+                            <td
+                                class="datos-adicionales"
+                                data-campos-adicionales="{{ registro.campos_adicionales|tojson|forceescape }}">
+
+                                {% if registro.campos_adicionales %}
+                                    {{ registro.campos_adicionales|join('; ') }}
+                                {% else %}
+                                    Ninguno
+                                {% endif %}
+
+                            </td>
+                            <!-- Fecha de registro: no editable. -->
+                            <td>{{ registro.fecha_registro or '' }}</td>
+
+                            <!-- Acciones individuales. -->
+                            <td class="columna-acciones">
+
+                                <div class="acciones-invalidos" hidden>
+
+                                    <button
+                                        type="button"
+                                        class="btn-guardar-invalido">
+                                        Guardar cambios
+                                    </button>
+
+                                    <form
+                                        action="{{ url_for('eliminar_registro_invalido') }}"
+                                        method="POST"
+                                        class="form-eliminar-invalido">
+
+                                        <input
+                                            type="hidden"
+                                            name="id_registro"
+                                            value="{{ registro.id_registro }}">
+
+                                        <button type="submit" class="btn-eliminar-invalido">
+                                            Eliminar registro
+                                        </button>
+
+                                    </form>
+
+                                    {% if registro.campos_adicionales %}
+
+                                        <button
+                                            type="button"
+                                            class="btn-eliminar-adicionales">
+                                            Eliminar datos adicionales
+                                        </button>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p>No hay registros inválidos pendientes de corrección.</p>
+
+    {% endif %}
+
+</div>
+
+
+
+
+                </div>
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+<script>
+
+// Activa la edición o cancela los cambios de los registros válidos.
+function alternarEdicionCasosValidos() {
+
+    // Recuperamos la sección correspondiente a los registros válidos.
+    const botonEditar = document.getElementById("btnEditarCasosValidos");
+    const seccion = botonEditar.closest(".seccion-resultados");
+    const tabla = seccion.querySelector("table");
+
+    if (!tabla) return;
+
+    const campos = tabla.querySelectorAll(".campo-edicion");
+    const datos = tabla.querySelectorAll(".dato-lectura");
+    const acciones = tabla.querySelectorAll(".acciones-edicion");
+
+    // Comprobamos si la tabla ya se encuentra en modo edición.
+    const estaEditando = !campos[0].hidden;
+
+    // Si se cancela, restauramos los valores originales.
+    if (estaEditando) {
+        tabla.querySelectorAll("tbody tr").forEach(fila => {
+            const formulario = fila.querySelector(
+                "form[id^='formEditarCaso']"
+            );
+
+            if (formulario) {
+                formulario.reset();
+            }
+        });
+    }
+
+    // Mostramos u ocultamos los campos de edición.
+    campos.forEach(campo => {
+        campo.hidden = estaEditando;
+    });
+
+    // Mostramos u ocultamos los datos originales.
+    datos.forEach(dato => {
+        dato.hidden = !estaEditando;
+    });
+
+    // Mostramos u ocultamos las acciones individuales.
+    acciones.forEach(accion => {
+        accion.hidden = estaEditando;
+    });
+
+    // Mostramos los botones generales únicamente durante la edición.
+    document.getElementById("btnGuardarTodos").hidden = estaEditando;
+    document.getElementById("btnCancelarEdicionCasos").hidden = estaEditando;
+
+    // Ocultamos el botón de edición mientras se editan los registros.
+    botonEditar.hidden = !estaEditando;
+}
+
+
+// Recopila y envía todos los registros válidos para su actualización.
+// Recopila y envía todos los registros válidos para su actualización.
+function guardarTodosLosCasos() {
+
+    // Recuperamos la tabla de registros válidos.
+    const botonEditar = document.getElementById("btnEditarCasosValidos");
+    const seccion = botonEditar.closest(".seccion-resultados");
+    const tabla = seccion.querySelector("table");
+
+    if (!tabla) return;
+
+    const registros = [];
+
+    // Recorremos las filas y recuperamos directamente sus campos.
+    tabla.querySelectorAll("tbody tr").forEach(fila => {
+
+        const formulario = fila.querySelector(
+            "form[id^='formEditarCaso']"
+        );
+
+        if (!formulario) return;
+
+        // Recuperamos cada dato desde su control dentro de la fila.
+        const registro = {
+            codigo_original: formulario.elements.namedItem("codigo_original").value,
+            codigo_caso: fila.querySelector('[name="codigo_caso"]').value,
+            estado: fila.querySelector('[name="estado"]').value,
+            descripcion: fila.querySelector('[name="descripcion"]').value,
+            prioridad: fila.querySelector('[name="prioridad"]').value,
+            fecha_apertura: fila.querySelector('[name="fecha_apertura"]').value,
+            es_vip: fila.querySelector('[name="es_vip"]').value,
+            nombre_sede: fila.querySelector('[name="nombre_sede"]').value,
+            observaciones: fila.querySelector('[name="observaciones"]').value
+        };
+
+        registros.push(registro);
+    });
+
+    // Comprobamos que existan registros para procesar.
+    if (registros.length === 0) {
+        alert("No hay registros para actualizar.");
+        return;
+    }
+
+    // Preparamos el formulario general con todos los registros.
+    document.getElementById("registrosActualizados").value =
+        JSON.stringify(registros);
+
+    // Enviamos los cambios a Flask.
+    document.getElementById("formActualizarTodos").submit();
+}
+
+    // Limpia la búsqueda actual y restablece la información de la página.
+    function limpiarBusqueda() {
+
+        // Redirigimos a la página de asignación sin parámetros de búsqueda.
+        window.location.href = "/asignacion";
+    }
+
+    // Recuperamos los técnicos enviados desde Flask.
+    const listaTecnicos = {{ tecnicos | tojson }};
+
+    // Controla la activación y desactivación del modo de modificación.
+    function alternarModoModificacion() {
+
+        const boton = document.getElementById("botonModificarCasos");
+        const botonAgregar = document.getElementById("botonAgregarCaso");
+
+        // Comprobamos si el modo de modificación está activo.
+        const modoActivo = boton.dataset.activo === "true";
+
+        // Invertimos el estado del modo.
+        const nuevoEstado = !modoActivo;
+
+        boton.dataset.activo = String(nuevoEstado);
+
+        // Actualizamos el texto del botón.
+        boton.textContent = nuevoEstado
+            ? "SALIR DE MODIFICACIÓN"
+            : "MODIFICAR CASOS";
+
+        // Mostramos u ocultamos el botón para agregar casos.
+        botonAgregar.style.display = nuevoEstado ? "inline-block" : "none";
+
+        // Mostramos las acciones correspondientes a cada modo.
+        document.querySelectorAll(".acciones-normales").forEach(elemento => {
+            elemento.style.display = nuevoEstado ? "none" : "block";
+        });
+
+        document.querySelectorAll(".acciones-modificacion").forEach(elemento => {
+            elemento.style.display = nuevoEstado ? "flex" : "none";
+        });
+
+        // Si salimos del modo de modificación, cerramos el formulario.
+        if (!nuevoEstado) {
+            ocultarFormularioCaso();
+        }
+    }
+
+    // Muestra el formulario para agregar un caso.
+    function mostrarFormularioCaso() {
+        document.getElementById("formularioCaso").style.display = "block";
+    }
+
+    // Oculta el formulario y restablece sus valores y configuración.
+    function ocultarFormularioCaso() {
+
+        // Ocultamos el formulario.
+        document.getElementById("formularioCaso").style.display = "none";
+
+        // Limpiamos los campos.
+        const formulario = document.getElementById("formAgregarCaso");
+        formulario.reset();
+
+        // Eliminamos el código original de edición.
+        document.getElementById("codigoOriginal").value = "";
+
+        // Restauramos la ruta original para registrar casos.
+        formulario.action = "{{ url_for('agregar_caso_manual') }}";
+
+        // Eliminamos el código original de edición.
+        delete formulario.dataset.codigoOriginal;
+
+        // Restauramos el título y el botón.
+        document.getElementById("tituloFormularioCaso").textContent = "Agregar caso manualmente";
+        document.getElementById("botonGuardarCaso").textContent = "Guardar caso";
+
+
+}
+
+
+    // Abre la ventana de asignación manual.
+    function abrirModalAsignacion() {
+        document.getElementById("modalAsignacion").style.display = "flex";
+        actualizarTecnicos();
+    }
+
+    // Cierra la ventana de asignación manual.
+    function cerrarModalAsignacion() {
+        document.getElementById("modalAsignacion").style.display = "none";
+    }
+
+    // Actualiza los técnicos según la sede seleccionada.
+    function actualizarTecnicos() {
+        const selectSede = document.getElementById("selectSede");
+        const selectTecnico = document.getElementById("selectTecnico");
+        const botonConfirmar = document.getElementById("botonConfirmarAsignacion");
+
+        const sedeSeleccionada = selectSede.value;
+
+        // Deshabilitamos el botón mientras se actualiza la lista.
+        botonConfirmar.disabled = true;
+
+        // Limpiamos las opciones anteriores.
+        selectTecnico.innerHTML = "";
+
+        if (!sedeSeleccionada) {
+            selectTecnico.innerHTML =
+                '<option value="">Selecciona primero una sede</option>';
+
+            selectTecnico.disabled = true;
+            return;
+        }
+
+        // Filtramos los técnicos pertenecientes a la sede seleccionada.
+        const tecnicosSede = listaTecnicos.filter(
+            tecnico => String(tecnico.id_sede) === String(sedeSeleccionada)
+        );
+
+        if (tecnicosSede.length === 0) {
+            selectTecnico.innerHTML =
+                '<option value="">No hay técnicos registrados en esta sede</option>';
+
+            selectTecnico.disabled = true;
+            return;
+        }
+
+        // Agregamos una opción inicial para obligar a elegir un técnico.
+        const opcionInicial = document.createElement("option");
+        opcionInicial.value = "";
+        opcionInicial.textContent = "Selecciona un técnico";
+        selectTecnico.appendChild(opcionInicial);
+
+        // Agregamos los técnicos de la sede seleccionada.
+        tecnicosSede.forEach(tecnico => {
+            const opcion = document.createElement("option");
+
+            opcion.value = tecnico.id_tecnico;
+
+            opcion.textContent = tecnico.activo
+                ? tecnico.nombre
+                : tecnico.nombre + " (Inactivo)";
+
+            // Los técnicos inactivos no pueden seleccionarse.
+            opcion.disabled = !Boolean(tecnico.activo);
+
+            selectTecnico.appendChild(opcion);
+        });
+
+        // Habilitamos el desplegable si existe al menos un técnico activo.
+        selectTecnico.disabled = !tecnicosSede.some(
+            tecnico => Boolean(tecnico.activo)
+        );
+    }
+
+    // Habilita el botón únicamente cuando se selecciona un técnico activo.
+    function actualizarEstadoBoton() {
+        const selectTecnico = document.getElementById("selectTecnico");
+        const botonConfirmar = document.getElementById("botonConfirmarAsignacion");
+
+        const tecnicoSeleccionado = listaTecnicos.find(
+            tecnico =>
+                String(tecnico.id_tecnico) === selectTecnico.value
+        );
+
+        // El botón solo se habilita si el técnico seleccionado está activo.
+        botonConfirmar.disabled = !(
+            tecnicoSeleccionado && Boolean(tecnicoSeleccionado.activo)
+        );
+    }
+
+    // Carga los datos del caso seleccionado en el formulario de edición.
+    function editarCaso(boton) {
+
+        // Recuperamos los datos almacenados en los atributos del botón.
+        const codigo = boton.dataset.codigo;
+        const descripcion = boton.dataset.descripcion;
+        const prioridad = boton.dataset.prioridad;
+        const sede = boton.dataset.sede;
+        const vip = boton.dataset.vip;
+        const fechaApertura = boton.dataset.fecha;
+
+        // Recuperamos el formulario.
+        const formulario = document.getElementById("formAgregarCaso");
+
+        // Cargamos la información del caso seleccionado.
+        document.getElementById("codigoCaso").value = codigo;
+        document.getElementById("descripcionCaso").value = descripcion;
+        document.getElementById("prioridadCaso").value = prioridad;
+        document.getElementById("sedeCaso").value = sede;
+        document.getElementById("vipCaso").value = vip;
+        document.getElementById("fechaAperturaCaso").value = fechaApertura;
+
+        // Cambiamos el título y el texto del botón.
+        document.getElementById("tituloFormularioCaso").textContent = "Editar caso";
+        document.getElementById("botonGuardarCaso").textContent = "Guardar cambios";
+
+        // Conservamos el código original para identificar el registro.
+        formulario.dataset.codigoOriginal = codigo;
+
+        // Enviamos el código original mediante el campo oculto.
+        document.getElementById("codigoOriginal").value = codigo;
+
+        // Mostramos el formulario.
+        document.getElementById("formularioCaso").style.display = "block";
+
+        // Desplazamos la página hasta el formulario.
+        document.getElementById("formularioCaso").scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+        // Cambiamos la ruta del formulario para actualizar el caso.
+        formulario.action = "/actualizar-caso-manual";
+    }
+
+
+    
+    
+    // Abre la ventana de confirmación de eliminación.
+    function abrirModalEliminar(boton) {
+
+        // Recuperamos el código del caso seleccionado.
+        const codigo = boton.dataset.codigo;
+
+        // Mostramos el código dentro de la ventana.
+        document.getElementById("codigoCasoEliminar").textContent = codigo;
+
+        // Guardamos el código que se enviará a Flask.
+        document.getElementById("inputCodigoEliminar").value = codigo;
+
+        // Mostramos la ventana de confirmación.
+        document.getElementById("modalEliminarCaso").style.display = "flex";
+    }
+
+    // Cierra la ventana de confirmación de eliminación.
+    function cerrarModalEliminar() {
+
+        // Ocultamos la ventana.
+        document.getElementById("modalEliminarCaso").style.display = "none";
+
+        // Limpiamos el código del caso seleccionado.
+        document.getElementById("inputCodigoEliminar").value = "";
+    }
+
+    // Abre la ventana para cargar archivos CSV.
+    function abrirModalCargaArchivo() {
+
+        // Mostramos el modal.
+        document.getElementById("modalCargaArchivo").style.display = "flex";
+
+    }
+
+// Cierra el proceso de carga y vuelve a mostrar el menú inicial.
+function cerrarModalCargaArchivo() {
+
+    // Recargamos la pantalla para limpiar los resultados anteriores.
+    window.location.replace("/asignacion");
+
+}
+
+// Cierra el mensaje flotante de transferencia.
+function cerrarMensajeTransferencia() {
+
+    const mensaje = document.getElementById("mensajeTransferencia");
+    const mensajeError = document.getElementById("mensajeTransferenciaError");
+
+    // Ocultamos el mensaje de resultado si existe.
+    if (mensaje) {
+        mensaje.style.display = "none";
+    }
+
+    // Ocultamos el mensaje de error si existe.
+    if (mensajeError) {
+        mensajeError.style.display = "none";
+    }
+}
+
+// Cerramos automáticamente los mensajes después de 8 segundos.
+document.addEventListener("DOMContentLoaded", function() {
+
+    const mensaje = document.getElementById("mensajeTransferencia");
+    const mensajeError = document.getElementById("mensajeTransferenciaError");
+
+    if (mensaje || mensajeError) {
+        setTimeout(cerrarMensajeTransferencia, 8000);
+    }
+
+});
+
+
+    // Indicamos desde Flask si debemos abrir el modal.
+    const abrirModalAutomaticamente = {{ abrir_modal_carga | tojson }};
+
+    if (abrirModalAutomaticamente) {
+        document.addEventListener("DOMContentLoaded", function() {
+            abrirModalCargaArchivo();
+        });
+    }
+
+// ==================================================
+// EDICIÓN DE REGISTROS INVÁLIDOS
+// ==================================================
+
+// Controlamos si la tabla está en modo edición.
+let editandoInvalidos = false;
+
+
+// Activamos o cancelamos la edición de los registros inválidos.
+function alternarEdicionInvalidos() {
+
+    const tabla = document.getElementById("tablaInvalidos");
+
+    const botonEditar = document.getElementById("btnEditarInvalidos");
+    const botonCancelar = document.getElementById("btnCancelarEdicionInvalidos");
+    const botonGuardarTodos = document.getElementById("btnGuardarTodosInvalidos");
+
+    if (!tabla) {
+        return;
+    }
+
+    // Obtenemos todas las filas de registros inválidos.
+    const filas = tabla.querySelectorAll("tbody tr");
+
+    // Cambiamos el estado de edición.
+    editandoInvalidos = !editandoInvalidos;
+
+    filas.forEach(fila => {
+
+        // Obtenemos los campos editables de la fila.
+        const campos = fila.querySelectorAll(".campo-edicion-invalido");
+
+        // Obtenemos los textos que se muestran normalmente.
+        const textos = fila.querySelectorAll(".dato-lectura-invalido");
+
+        // Obtenemos la columna y el contenedor de acciones.
+        const columnaAcciones = fila.querySelector(".columna-acciones");
+        const acciones = fila.querySelector(".acciones-invalidos");
+
+        if (editandoInvalidos) {
+
+            // Guardamos los valores originales para poder cancelar.
+            campos.forEach(campo => {
+                campo.dataset.valorOriginal = campo.value;
+            });
+
+            // Mostramos los campos editables.
+            campos.forEach(campo => {
+                campo.hidden = false;
+            });
+
+            // Ocultamos los textos de lectura.
+            textos.forEach(texto => {
+                texto.hidden = true;
+            });
+
+            // Mostramos únicamente los botones de acciones de esta fila.
+            if (acciones) {
+                acciones.hidden = false;
+            }
+
+        } else {
+
+            // Restauramos los valores originales al cancelar.
+            campos.forEach(campo => {
+
+                if (campo.dataset.valorOriginal !== undefined) {
+                    campo.value = campo.dataset.valorOriginal;
+                }
+
+                campo.hidden = true;
+            });
+
+            // Volvemos a mostrar los textos de lectura.
+            textos.forEach(texto => {
+                texto.hidden = false;
+            });
+
+            // Ocultamos los botones, pero mantenemos visible la columna.
+            if (acciones) {
+                acciones.hidden = true;
+            }
+
+        }
+
+    });
+
+    // Actualizamos la visibilidad de los controles generales.
+    botonEditar.hidden = editandoInvalidos;
+    botonCancelar.hidden = !editandoInvalidos;
+    botonGuardarTodos.hidden = !editandoInvalidos;
+
+}
+
+
+// ==================================================
+// GUARDAR UN REGISTRO INVÁLIDO
+// ==================================================
+
+document.querySelectorAll(".btn-guardar-invalido").forEach(boton => {
+
+    boton.addEventListener("click", async function () {
+
+        // Identificamos la fila del registro seleccionado.
+        const fila = this.closest("tr");
+        const idRegistro = fila.dataset.id;
+
+        // Recuperamos los campos editables.
+        const campos = fila.querySelectorAll(".campo-edicion-invalido");
+
+        // Preparamos los datos que recibirá Flask.
+        const datos = new URLSearchParams();
+
+        datos.append("id_registro", idRegistro);
+
+        campos.forEach(campo => {
+            datos.append(campo.name, campo.value.trim());
+        });
+
+        // Recuperamos los campos adicionales de este registro.
+        let camposAdicionales = [];
+
+        try {
+            camposAdicionales = JSON.parse(
+                fila.dataset.camposAdicionales || "[]"
+            );
+        } catch (error) {
+            alert("No fue posible interpretar los campos adicionales.");
+            return;
+        }
+
+        datos.append(
+            "campos_adicionales",
+            JSON.stringify(camposAdicionales)
+        );
+
+        // Evitamos guardar varias veces mientras se procesa la solicitud.
+        this.disabled = true;
+
+        try {
+
+            const respuesta = await fetch("/corregir-registro-invalido", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: datos
+            });
+
+            if (!respuesta.ok) {
+                throw new Error("No fue posible guardar el registro.");
+            }
+
+            // Recargamos la interfaz para mostrar el resultado del servidor.
+            window.location.reload();
+
+        } catch (error) {
+
+    
+            alert(error.message);
+            this.disabled = false;
+
+        }
+
+    });
+
+});
+
+
+// ==================================================
+// ELIMINAR LOS CAMPOS ADICIONALES DE UN REGISTRO
+// ==================================================
+
+document.querySelectorAll(".btn-eliminar-adicionales").forEach(boton => {
+
+    boton.addEventListener("click", function () {
+
+        // Identificamos únicamente la fila seleccionada.
+        const fila = this.closest("tr");
+
+        if (!fila) {
+            return;
+        }
+
+        // Identificamos la celda de campos adicionales.
+        const celdaAdicionales = fila.querySelector(".datos-adicionales");
+
+        if (!celdaAdicionales) {
+            return;
+        }
+
+        // Eliminamos los campos adicionales únicamente de este registro.
+        celdaAdicionales.dataset.camposAdicionales = JSON.stringify([]);
+        celdaAdicionales.textContent = "Ninguno";
+
+        // Informamos que debe guardar los cambios.
+        mostrarNotificacionInvalidos(
+            "Los campos adicionales fueron eliminados. Pulsa Guardar cambios para confirmar la modificación."
+        );
+
+        // Ocultamos el botón porque ya no quedan campos adicionales.
+        this.hidden = true;
+
+    });
+
+});
+
+
+// ==================================================
+// GUARDAR CAMBIOS DE UN REGISTRO INVÁLIDO
+// ==================================================
+
+// Escuchamos los clics en los botones de guardar de cada fila.
+document.addEventListener("click", function(event) {
+
+    const boton = event.target.closest(".btn-guardar-invalido");
+
+    // Si el clic no corresponde al botón de guardar, no hacemos nada.
+    if (!boton) {
+        return;
+    }
+
+    // Identificamos la fila del registro seleccionado.
+    const fila = boton.closest("tr");
+
+    if (!fila) {
+        return;
+    }
+
+    // Recuperamos el identificador del registro.
+    const idRegistro = fila.dataset.id;
+
+    // Recuperamos los campos editables de esa fila.
+    const campos = [
+        "codigo_caso",
+        "estado",
+        "descripcion",
+        "fecha_prevista",
+        "prioridad",
+        "fecha_apertura",
+        "es_vip",
+        "nombre_sede"
+    ];
+
+    // Recuperamos los datos adicionales originales.
+    const celdaAdicionales = fila.querySelector(".datos-adicionales");
+
+    let camposAdicionales = [];
+
+    if (celdaAdicionales) {
+        try {
+            camposAdicionales = JSON.parse(
+                celdaAdicionales.dataset.camposAdicionales || "[]"
+            );
+        } catch (error) {
+            alert("No fue posible recuperar los campos adicionales.");
+            return;
+        }
+    }
+
+    // Creamos un formulario para enviar los datos al servidor.
+    const formulario = document.createElement("form");
+
+    formulario.method = "POST";
+    formulario.action = "{{ url_for('guardar_registro_invalido') }}";
+
+    // Función auxiliar para agregar campos al formulario.
+    function agregarCampo(nombre, valor) {
+
+        const input = document.createElement("input");
+
+        input.type = "hidden";
+        input.name = nombre;
+        input.value = valor;
+
+        formulario.appendChild(input);
+    }
+
+    // Enviamos el identificador del registro.
+    agregarCampo("id_registro", idRegistro);
+
+    // Enviamos los valores actuales de los campos editables.
+    campos.forEach(nombre => {
+
+        const campo = fila.querySelector(`[name="${nombre}"]`);
+
+        if (campo) {
+            agregarCampo(nombre, campo.value);
+        }
+
+    });
+
+    // Enviamos los campos adicionales como JSON.
+    agregarCampo(
+        "campos_adicionales",
+        JSON.stringify(camposAdicionales)
+    );
+
+    // Agregamos el formulario temporalmente y lo enviamos.
+    document.body.appendChild(formulario);
+
+    formulario.submit();
+
+});
+
+
+// ==================================================
+// ELIMINAR CAMPOS ADICIONALES DE UN REGISTRO
+// ==================================================
+
+document.addEventListener("click", function(event) {
+
+    const boton = event.target.closest(".btn-eliminar-adicionales");
+
+    // Comprobamos si se pulsó el botón correspondiente.
+    if (!boton) {
+        return;
+    }
+
+    // Identificamos únicamente la fila seleccionada.
+    const fila = boton.closest("tr");
+
+    if (!fila) {
+        return;
+    }
+
+    // Recuperamos la celda que contiene los campos adicionales.
+    const celdaAdicionales = fila.querySelector(".datos-adicionales");
+
+    if (!celdaAdicionales) {
+        return;
+    }
+
+
+    // Eliminamos los campos adicionales de esta fila.
+    celdaAdicionales.dataset.camposAdicionales = "[]";
+
+    // Actualizamos la información visible.
+    celdaAdicionales.textContent = "Ninguno";
+
+    // Retiramos el botón porque el registro ya no tiene datos adicionales.
+    boton.remove();
+
+});
+
+
+// ==================================================
+// GUARDAR TODOS LOS REGISTROS INVÁLIDOS
+// ==================================================
+
+async function guardarTodosInvalidos() {
+
+    const tabla = document.getElementById("tablaInvalidos");
+
+    if (!tabla) {
+        return;
+    }
+
+    // Recuperamos todas las filas de registros inválidos.
+    const filas = tabla.querySelectorAll("tbody tr");
+
+    const registros = [];
+
+    // Recorremos cada fila para recuperar sus datos actuales.
+    for (const fila of filas) {
+
+        const idRegistro = fila.dataset.id;
+
+        const nombresCampos = [
+            "codigo_caso",
+            "estado",
+            "descripcion",
+            "fecha_prevista",
+            "prioridad",
+            "fecha_apertura",
+            "es_vip",
+            "nombre_sede"
+        ];
+
+        const datos = {};
+
+        // Recuperamos los valores editados de cada campo.
+        nombresCampos.forEach(nombre => {
+
+            const campo = fila.querySelector(`[name="${nombre}"]`);
+
+            if (campo) {
+                datos[nombre] = campo.value;
+            }
+
+        });
+
+        // Recuperamos los campos adicionales de esta fila.
+        const celdaAdicionales = fila.querySelector(".datos-adicionales");
+
+        let camposAdicionales = [];
+
+        if (celdaAdicionales) {
+            try {
+                camposAdicionales = JSON.parse(
+                    celdaAdicionales.dataset.camposAdicionales || "[]"
+                );
+            } catch (error) {
+            mostrarNotificacionInvalidos(
+                `No fue posible leer los campos adicionales del registro ${idRegistro}.`,
+                "error"
+            );
+                return;
+            }
+        }
+
+        registros.push({
+            id_registro: idRegistro,
+            datos: datos,
+            campos_adicionales: camposAdicionales
+        });
+
+    }
+
+    if (registros.length === 0) {
+        alert("No hay registros para guardar.");
+        return;
+    }
+
+    // Evitamos que el usuario envíe varias solicitudes simultáneas.
+    const boton = document.getElementById("btnGuardarTodosInvalidos");
+
+    boton.disabled = true;
+    boton.textContent = "Guardando...";
+
+    try {
+
+        // Enviamos todos los registros a la nueva ruta.
+        const respuesta = await fetch(
+            "{{ url_for('guardar_todos_registros_invalidos') }}",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(registros)
+            }
+        );
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok || !resultado.exito) {
+            throw new Error(
+                resultado.mensaje || "No fue posible guardar los registros."
+            );
+        }
+
+        // Mostramos el resumen directamente en la interfaz.
+        mostrarNotificacionInvalidos(
+            "Proceso finalizado. Registros procesados: " +
+            resultado.total +
+            " | Corregidos y transferidos: " +
+            resultado.corregidos +
+            " | Pendientes de corrección: " +
+            resultado.pendientes
+        );
+
+        // Recargamos después de permitir que el usuario vea la notificación.
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+
+    } catch (error) {
+
+        mostrarNotificacionInvalidos(
+            "Error al guardar los registros: " + error.message,
+            "error"
+        );
+
+        boton.disabled = false;
+        boton.textContent = "Guardar todos los cambios";
+
+    }
+
+}
+
+
+// ==================================================
+// MOSTRAR NOTIFICACIONES DE REGISTROS INVÁLIDOS
+// ==================================================
+
+function mostrarNotificacionInvalidos(mensaje, tipo = "exito") {
+
+    const notificacion = document.getElementById(
+        "notificacionInvalidos"
+    );
+
+    if (!notificacion) {
+        return;
+    }
+
+    // Mostramos el mensaje dentro de la interfaz.
+    notificacion.textContent = mensaje;
+    notificacion.classList.toggle("error", tipo === "error");
+    notificacion.hidden = false;
+
+}
+
+</script>
+
+</body>
+</html>

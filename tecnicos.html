@@ -1,0 +1,558 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Técnicos - Proyecto Aris</title>
+
+    <style>
+        /* Configuración general de la página. */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #263238;
+        }
+
+        .contenedor {
+            max-width: 1450px;
+            margin-left: 235px;
+            margin-right: auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #263238;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        /* Barra lateral de navegación. */
+        .barra-lateral {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 235px;
+            height: 100vh;
+            padding: 30px 15px;
+            background-color: #263746;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .barra-lateral h2 {
+            padding: 0 12px;
+            margin-bottom: 25px;
+            font-size: 19px;
+            color: white;
+        }
+
+        .enlace-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 12px;
+            border-radius: 6px;
+            color: #dce3e9;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .enlace-menu:hover {
+            background-color: #354b5e;
+        }
+
+        .enlace-menu.activo {
+            background-color: #1976d2;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Tarjetas de resumen. */
+        .resumen-tecnicos {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .tarjeta-resumen {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .tarjeta-resumen p {
+            margin: 0 0 10px;
+            color: #607d8b;
+            font-size: 14px;
+        }
+
+        .tarjeta-resumen strong {
+            font-size: 28px;
+            color: #263746;
+        }
+
+        /* Tarjeta principal. */
+        .tarjeta {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Filtros del listado de técnicos. */
+        .filtros-tecnicos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin: 20px 0;
+            padding: 18px;
+            background-color: #f4f6f9;
+            border-radius: 8px;
+        }
+
+        .filtro {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 180px;
+        }
+
+        .filtro label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #263746;
+        }
+
+        .filtro select {
+            padding: 10px;
+            border: 1px solid #cbd5df;
+            border-radius: 6px;
+            background-color: white;
+            color: #263238;
+            font-size: 14px;
+        }
+
+        /* Mensaje cuando ningún técnico cumple los filtros. */
+        .sin-resultados-filtro {
+            display: none;
+            padding: 20px;
+            text-align: center;
+            color: #777;
+        }
+
+        /* Tabla de técnicos. */
+        .tabla-contenedor {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #edf1f5;
+            color: #263746;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Etiquetas de tipo y estado. */
+        .etiqueta {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .vip {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .estandar {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .activo {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .inactivo {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .estado-vacio {
+            padding: 25px;
+            text-align: center;
+            color: #777;
+        }
+
+        .mensaje-error {
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            background-color: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        /* Adaptación para pantallas medianas. */
+        @media (max-width: 1100px) {
+            .resumen-tecnicos {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Adaptación para pantallas pequeñas. */
+        @media (max-width: 850px) {
+            body {
+                padding: 15px;
+            }
+
+            .barra-lateral {
+                width: 190px;
+            }
+
+            .contenedor {
+                margin-left: 190px;
+            }
+
+            .resumen-tecnicos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .barra-lateral {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .contenedor {
+                margin-left: auto;
+            }
+
+            .resumen-tecnicos {
+                grid-template-columns: 1fr;
+            }
+        }
+
+            /* Identificación del usuario conectado. */
+    .usuario-conectado {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #ffffff;
+        font-size: 14px;
+    }
+    </style>
+</head>
+
+<body>
+
+    <!-- Menú lateral de navegación. -->
+    <nav class="barra-lateral">
+
+    <h2>Sistema de Gestión de Incidentes y Requerimientos</h2>
+
+    <!-- Mostramos el usuario que inició sesión. -->
+    <div class="usuario-conectado">
+        <span>Usuario:</span>
+        <strong>{{ usuario_actual }}</strong>
+    </div>
+
+    <a href="/dashboard" class="enlace-menu">
+        <span>▦</span>
+        Dashboard
+    </a>
+
+    <a href="/asignacion" class="enlace-menu">
+        <span>▤</span>
+        Asignación
+    </a>
+
+    <a href="/tecnicos" class="enlace-menu activo">
+        <span>♙</span>
+        Técnicos
+    </a>
+
+    <a href="/base-conocimientos" class="enlace-menu">
+        <span>▣</span>
+        Base de conocimientos
+    </a>
+        <!-- Botón para cerrar la sesión actual. -->
+    <a href="/cerrar-sesion" class="enlace-menu">
+        <span>↪</span>
+        Cerrar sesión
+    </a>
+
+    </nav>
+
+    <main class="contenedor">
+
+        <h1>Gestión de técnicos</h1>
+
+        <!-- Indicadores generales de los técnicos. -->
+        <section class="resumen-tecnicos">
+
+            <div class="tarjeta-resumen">
+                <p>Total de técnicos</p>
+                <strong>{{ resumen.total }}</strong>
+            </div>
+
+            <div class="tarjeta-resumen">
+                <p>Técnicos activos</p>
+                <strong>{{ resumen.activos }}</strong>
+            </div>
+
+            <div class="tarjeta-resumen">
+                <p>Técnicos inactivos</p>
+                <strong>{{ resumen.inactivos }}</strong>
+            </div>
+
+            <div class="tarjeta-resumen">
+                <p>Técnicos VIP</p>
+                <strong>{{ resumen.vip }}</strong>
+            </div>
+
+            <div class="tarjeta-resumen">
+                <p>Técnicos estándar</p>
+                <strong>{{ resumen.estandar }}</strong>
+            </div>
+
+        </section>
+
+        <!-- Listado general de técnicos. -->
+        <section class="tarjeta">
+
+            <h2>Listado de técnicos</h2>
+
+            <!-- Filtros para delimitar los técnicos mostrados. -->
+            <div class="filtros-tecnicos">
+
+                <div class="filtro">
+                    <label for="filtro-sede">Sede</label>
+                        <select id="filtro-sede">
+                            <option value="">Todas las sedes</option>
+                            {% for sede in sedes %}
+                                <option value="{{ sede.nombre_sede }}">
+                                    {{ sede.nombre_sede }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                </div>
+
+                <div class="filtro">
+                    <label for="filtro-tipo">Tipo de técnico</label>
+
+                    <select id="filtro-tipo">
+                        <option value="">Todos</option>
+                        <option value="vip">VIP</option>
+                        <option value="estandar">Estándar</option>
+                    </select>
+                </div>
+
+                <div class="filtro">
+                    <label for="filtro-estado">Estado</label>
+
+                    <select id="filtro-estado">
+                        <option value="">Todos</option>
+                        <option value="activo">Activos</option>
+                        <option value="inactivo">Inactivos</option>
+                    </select>
+                </div>
+
+            </div>
+
+            {% if error_consulta %}
+
+                <div class="mensaje-error">
+                    {{ error_consulta }}
+                </div>
+
+            {% elif tecnicos %}
+
+                <div class="tabla-contenedor">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Sede</th>
+                                <th>Estado</th>
+                                <th>Carga laboral</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for tecnico in tecnicos %}
+
+                                <tr
+                                    data-sede="{{ tecnico.nombre_sede }}"
+                                    data-tipo="{{ 'vip' if tecnico.es_vip else 'estandar' }}"
+                                    data-estado="{{ 'activo' if tecnico.activo else 'inactivo' }}"
+                                >
+
+                                    <td>{{ tecnico.id_tecnico }}</td>
+
+                                    <td>{{ tecnico.nombre }}</td>
+
+                                    <td>
+                                        {% if tecnico.es_vip %}
+                                            <span class="etiqueta vip">VIP</span>
+                                        {% else %}
+                                            <span class="etiqueta estandar">Estándar</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>{{ tecnico.nombre_sede }}</td>
+
+                                    <td>
+                                        {% if tecnico.activo %}
+                                            <span class="etiqueta activo">Activo</span>
+                                        {% else %}
+                                            <span class="etiqueta inactivo">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ tecnico.carga_laboral }} casos
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+                <!-- Mensaje cuando los filtros no encuentran técnicos. -->
+                <p id="sin-resultados-filtro" class="sin-resultados-filtro">
+                    No hay técnicos que coincidan con los filtros seleccionados.
+                </p>
+
+            {% else %}
+
+                <p class="estado-vacio">
+                    No hay técnicos registrados.
+                </p>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+<script>
+
+
+// Esperamos a que la página termine de cargar.
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Recuperamos los filtros disponibles.
+    const filtroSede = document.getElementById("filtro-sede");
+    const filtroTipo = document.getElementById("filtro-tipo");
+    const filtroEstado = document.getElementById("filtro-estado");
+
+    // Recuperamos las filas de la tabla.
+    const filas = document.querySelectorAll("tbody tr");
+
+    // Recuperamos el mensaje para búsquedas sin resultados.
+    const mensajeVacio = document.getElementById("sin-resultados-filtro");
+
+    // Aplicamos los filtros seleccionados.
+    function filtrarTecnicos() {
+
+        // Obtenemos los valores seleccionados.
+        const sedeSeleccionada = filtroSede.value;
+        const tipoSeleccionado = filtroTipo.value;
+        const estadoSeleccionado = filtroEstado.value;
+
+        // Contamos los técnicos que coinciden con los filtros.
+        let tecnicosVisibles = 0;
+
+        filas.forEach(fila => {
+
+            // Recuperamos las características de cada técnico.
+            const sede = fila.dataset.sede;
+            const tipo = fila.dataset.tipo;
+            const estado = fila.dataset.estado;
+
+            // Comprobamos si el técnico cumple los criterios.
+            const coincideSede =
+                !sedeSeleccionada || sede === sedeSeleccionada;
+
+            const coincideTipo =
+                !tipoSeleccionado || tipo === tipoSeleccionado;
+
+            const coincideEstado =
+                !estadoSeleccionado || estado === estadoSeleccionado;
+
+            // Mostramos únicamente los técnicos coincidentes.
+            if (coincideSede && coincideTipo && coincideEstado) {
+                fila.style.display = "";
+                tecnicosVisibles++;
+            } else {
+                fila.style.display = "none";
+            }
+
+        });
+
+        // Mostramos el mensaje si no hay resultados.
+        if (mensajeVacio) {
+            mensajeVacio.style.display =
+                tecnicosVisibles === 0 ? "block" : "none";
+        }
+
+    } // Aquí termina filtrarTecnicos().
+
+    // Ejecutamos el filtrado cuando cambia cualquier selección.
+    filtroSede.addEventListener("change", filtrarTecnicos);
+    filtroTipo.addEventListener("change", filtrarTecnicos);
+    filtroEstado.addEventListener("change", filtrarTecnicos);
+
+}); // Aquí termina DOMContentLoaded.
+
+
+</script>
+</body>
+</html>
